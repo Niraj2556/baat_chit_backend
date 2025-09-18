@@ -25,6 +25,13 @@ class VideoCallApp {
     constructor() {
         this.app = express();
         this.server = http.createServer(this.app);
+        
+        this.setupMiddleware();
+        this.setupRoutes();
+        this.setupSocketIO();
+    }
+    
+    setupSocketIO() {
         this.io = new Server(this.server, {
             cors: {
                 origin: process.env.CORS_ORIGIN || "*",
@@ -34,10 +41,7 @@ class VideoCallApp {
             allowEIO3: true
         });
         this.socketHandler = new SocketHandler(this.io);
-        
-        this.setupMiddleware();
-        this.setupRoutes();
-        this.setupSocketHandlers();
+        this.socketHandler.initialize();
     }
 
     setupMiddleware() {
@@ -67,9 +71,7 @@ class VideoCallApp {
         });
     }
 
-    setupSocketHandlers() {
-        this.socketHandler.initialize();
-    }
+
 
     async start(port = process.env.PORT || 3000) {
         try {
