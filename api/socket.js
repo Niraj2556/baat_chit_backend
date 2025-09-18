@@ -1,19 +1,26 @@
 import { Server } from 'socket.io';
 import SocketHandler from '../src/handlers/socketHandler.js';
 
-let io;
-
 export default function handler(req, res) {
+    // Set CORS headers
+    const origin = process.env.CORS_ORIGIN || 'https://baat-chit-fronted.vercel.app';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+    
     if (!res.socket.server.io) {
-        console.log('Setting up Socket.IO server...');
-        io = new Server(res.socket.server, {
-            path: '/socket.io/',
+        const io = new Server(res.socket.server, {
             cors: {
-                origin: process.env.CORS_ORIGIN || "*",
-                methods: ["GET", "POST"]
-            },
-            transports: ['websocket', 'polling'],
-            allowEIO3: true
+                origin: origin,
+                methods: ["GET", "POST"],
+                credentials: true
+            }
         });
         
         const socketHandler = new SocketHandler(io);
@@ -22,5 +29,5 @@ export default function handler(req, res) {
         res.socket.server.io = io;
     }
     
-    res.end();
+    res.socket.server.io.engine.handleRequest(req, res);
 }

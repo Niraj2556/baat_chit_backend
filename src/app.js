@@ -34,8 +34,9 @@ class VideoCallApp {
     setupSocketIO() {
         this.io = new Server(this.server, {
             cors: {
-                origin: process.env.CORS_ORIGIN || "*",
-                methods: ["GET", "POST"]
+                origin: process.env.CORS_ORIGIN || 'https://baat-chit-fronted.vercel.app',
+                methods: ["GET", "POST"],
+                credentials: true
             },
             transports: ['websocket', 'polling'],
             allowEIO3: true
@@ -45,7 +46,10 @@ class VideoCallApp {
     }
 
     setupMiddleware() {
-        this.app.use(cors());
+        this.app.use(cors({
+            origin: process.env.CORS_ORIGIN || 'https://baat-chit-fronted.vercel.app',
+            credentials: true
+        }));
         this.app.use(express.json());
     }
 
