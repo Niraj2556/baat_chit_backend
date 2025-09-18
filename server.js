@@ -1,37 +1,29 @@
-import VideoCallApp from './src/app.js';
+import express from 'express';
 import mongoose from 'mongoose';
+import cors from 'cors';
+import authRoutes from './src/routes/auth.js';
 
-let appInstance;
+const app = express();
 
-export default async function handler(req, res) {
-    if (!appInstance) {
-        appInstance = new VideoCallApp();
-        
-        // Connect to MongoDB
-        try {
-            const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://nirajgupta54180_db_user:idxfjMZxQTJmhdMc@cluster0.mfjynmk.mongodb.net/videochat?retryWrites=true&w=majority&appName=Cluster0';
-            await mongoose.connect(mongoUri);
-            console.log('Connected to MongoDB');
-        } catch (error) {
-            console.error('Database connection failed:', error);
-        }
-    }
-    
-    // Handle Socket.IO upgrade
-    if (req.url?.startsWith('/socket.io/')) {
-        if (!res.socket.server.io) {
-            appInstance.setupSocketIO();
-            res.socket.server.io = appInstance.io;
-        }
-        return appInstance.io.engine.handleRequest(req, res);
-    }
-    
-    // Handle regular HTTP requests
-    return appInstance.app(req, res);
+// Connect to MongoDB
+if (!mongoose.connection.readyState) {
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://nirajgupta54180_db_user:idxfjMZxQTJmhdMc@cluster0.mfjynmk.mongodb.net/videochat?retryWrites=true&w=majority&appName=Cluster0';
+    mongoose.connect(mongoUri).catch(console.error);
 }
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-    const app = new VideoCallApp();
-    app.start();
-}
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || 'https://baat-chit-fronted.vercel.app',
+    credentials: true
+}));
+app.use(express.json());
+app.use('/api/auth', authRoutes);
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', message: 'Baat Chit Backend is running' });
+});
+
+app.use('*', (req, res) => {
+    res.status(404).json({ error: 'Route not found' });
+});
+
+export default app;
